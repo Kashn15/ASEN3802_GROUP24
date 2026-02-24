@@ -18,18 +18,6 @@ elseif strcmp(material,'Steel')
     k = 16.2;
 end
 
-% if material == 'Aluminum'
-% k = 130;
-% end
-% 
-% if material == 'Brass'
-% k = 115;
-% end
-% 
-% if material == 'Steel'
-% k = 16.2;
-% end
-
     v = strsplit(b{2},'V');
     ampval = strsplit(b{3},'mA');
     volts(i) = str2double(v{1});
@@ -46,9 +34,9 @@ end
     time = data(:,1);
     T = data(:,2:9);   % CH1–CH8
 
-    %% Extract steady state
+    %% steady state
     N = length(time);
-    steady_index = round(0.9*N):N;   % last 10% of data assumed steady
+    steady_index = round(0.9*N):N-2;   % last 10% of data assumed steady
 
     T_steady = mean(T(steady_index,:),1);
 
@@ -61,7 +49,7 @@ x5 = x4+0.5;
 x6 = x5+0.5;
 x7 = x6+0.5;
 x8 = x7+0.5;
-    x = 0.0254.*[x1 x2 x3 x4 x5 x6 x7 x8];
+    x = 0.0254.*[x1 x2 x3 x4 x5 x6 x7 x8]; %METERS
 
     %% Linear fit for experimental
 
@@ -73,8 +61,13 @@ x8 = x7+0.5;
     %% Analytical
     H_an = power/(k*A);
 
+    %% Tables 
+T_0_table(i) = T_0;
+H_exp_table(i) = H_exp;
+H_an_table(i) = H_an;
+Table_Task1(i,:) = [T_0_table(i), H_exp_table(i), H_an_table(i)];
     %% Plot
-    figure
+    figure;
     plot(x, x.*H_an+T_0);
     hold on
     plot(x, polyval(p,x))
@@ -86,26 +79,20 @@ x8 = x7+0.5;
 hold off
 
 %% Task 2
-% initial_index = 1:round(0.1*N);   % first 10% of data
-% T_initial = mean(T(initial_index,:),1);
-% 
-% p_init = polyfit(x, T_initial, 1);
-% M_exp = p_init(1);
-% M_0 = polyval(p_init,0);
-% 
-% figure
-% plot(x, x.*M_exp+M_0)
-% hold on
-% plot(x, polyval(p_init,x))
-% xlabel('Position (m)')
-% ylabel('Temperature (°C)')
-% title([a(i).name ' Initial Temperature Distribution'])
-% grid on
+initial_index = 1:round(0.1*N);   % first 10% of data
+T_initial = mean(T(initial_index,:),1);
 
-% initial_table = table(volts', amps', M_exp', ...
-%     'VariableNames', {'Voltage_V','Current_mA','M_exp_C_per_m'});
-% 
-% disp(initial_table)
+p_init = polyfit(x, T_initial, 1);
+M_exp = p_init(1);
+M_0 = polyval(p_init,0);
+
+figure;
+plot(x, x.*M_exp+M_0)
+hold on
+plot(x, polyval(p_init,x))
+xlabel('Position (m)')
+ylabel('Temperature (°C)')
+title([a(i).name ' Initial Temperature Distribution'])
+grid on
 
 end
-
