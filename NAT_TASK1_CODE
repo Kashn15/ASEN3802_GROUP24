@@ -1,0 +1,103 @@
+%% ASEN 3802 | Heat Conduction Lab Part 1
+% Author: Natsumi Kakuda
+
+clc;
+clear;
+close all;
+
+%% Task 1
+
+% Constants/Givens
+x0_toTC1_in = 1 + (3/8); % [IN]
+x0_toTC1 = x0_toTC1_in * 0.0254; % [m]
+
+dx_in = 1.0; % [IN]
+dx = dx_in * 0.0254; % [m]
+
+n = 8; % Number of thermocouples
+x = x0_toTC1 + (0:n-1) * dx; % 1x8 vector for each x (location) Thermal Couple
+
+D = 1 * 0.0254; % diameter of rod [m]
+A = pi*(D/2)^2; % Area [m^2]
+
+Error_degC = 2; % +/- 2 degree Celsius
+
+k_alm = 130; % [W/m*k]
+rho_alm = 2810; % [kg/m^3]
+cp_alm = 960; % [J/kg*K]
+
+k_brass = 115; % [W/m*k]
+rho_brass = 8500; % [kg/m^3]
+cp_brass = 380; % [J/kg*K]
+
+k_steel = 16.2; % [W/m*k]
+rho_steel = 8000; % [kg/m^3]
+cp_steel = 500; % [J/kg*K]
+
+steady_last_sec = 300;
+
+% Filereadin.m
+
+a=dir('*mA');
+
+for i=1:length(a)
+    T = readtable(a(i).name);
+    t = T{:,1}; % time
+    Tc = T{:,2:9}; % Thermo Couples 1-8
+
+    % Preallocate
+    volts   = zeros(length(a),1);
+    amps_mA = zeros(length(a),1);
+    amps    = zeros(length(a),1);
+    P       = zeros(length(a),1);
+    T0      = zeros(length(a),1);
+    H_exp    = zeros(length(a),1);
+    H_ana     = zeros(length(a),1);
+    material = strings(length(a),1);
+
+    % how to get voltage and amperage from file names?
+    % - options include strsplit, regex, etc.
+    % ultimately, we need to use the format of each file name
+    % 'material'_'volts'V_'amps'mA
+    b = strsplit(a(i).name,'_'); % gives a cell array (b) that is 1x3
+    % {'material','voltsV','ampsmA'} -- now split by 'V' and 'mA'
+    v = strsplit(b{2},'V'); % volts are always in the second portion
+    ampval= strsplit(b{3},'mA'); % amps are always in the third portion
+    volts(i) = str2num(v{1}); % convert string to number (vector)
+    amps(i) = str2num(ampval{1});
+
+    % Material Selection
+    if strcmpi(material,'Aluminum')
+        k = k_alm;
+    elseif strcmpi(material,'Brass')
+        k = k_brass;
+    else
+        k = k_steel;
+    end
+    
+    % Steady State Temps
+    t_end = t(end);
+    idx = t >= t_end - steady_last_sec;
+    T_ss = mean(Tc(idx,:),1);
+    
+    % Experimental Fit
+    p = polyfit(x, T_ss, 1);
+    H_exp = p(1);
+    T0 = p(2);
+    
+    % Analytical Slope
+    H_ana = sign(H_exp) * P / (k * A);
+
+    % Plot
+    figure();
+    errorbar(x, T_ss, Error_degC * ones(1,8),'o');
+    hold on;
+    plot(x, T0 + H_exp * x,'-');
+    plot(x, T0 + H_ana * x,'--');
+    grid on;
+
+    xlabel('x (m)');
+    ylabel('Temperature (^{\circ}C)');
+    title([material '  ' num2str(volts) 'V  ' num2str(amps*1000) 'mA']);
+    legend('Data','H_{exp}','H_{an}','Location','best');
+end
