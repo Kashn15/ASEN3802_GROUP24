@@ -29,14 +29,12 @@ end
     data = readmatrix(fullfile(dataFolder, a(i).name));
     % Delete first row
     data(1,:) = [];
-
-    % Split columns
     time = data(:,1);
     T = data(:,2:9);   % CH1–CH8
 
     %% steady state
     N = length(time);
-    steady_index = round(0.9*N):N-2;   % last 10% of data assumed steady
+    steady_index = round(0.9*N):N-2;   % last 10% of data assumed steady (we took the last 2 off which were NaN)
 
     T_steady = mean(T(steady_index,:),1);
 
@@ -95,4 +93,8 @@ ylabel('Temperature (°C)')
 title([a(i).name ' Initial Temperature Distribution'])
 grid on
 
+    %% Tables
+    Table_Task2(i) = M_0;
+    
 end
+
