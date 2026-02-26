@@ -95,7 +95,8 @@ legend('Initial Data','Linear Fit')
 grid on
 
     %% Tables
-    Table_Task2(i) = M_0;
+    Table_Task2(i) = M_exp;
     
 end
+
 
