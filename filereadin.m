@@ -30,13 +30,13 @@ end
     % Delete first row
     data(1,:) = [];
     time = data(:,1);
-    T = data(:,2:9);   % CH1–CH8
+    Dat = data(:,2:9);   % CH1–CH8
 
     %% steady state
     N = length(time);
     steady_index = round(0.9*N):N-2;   % last 10% of data assumed steady (we took the last 2 off which were NaN)
 
-    T_steady = mean(T(steady_index,:),1);
+    Dat_steady = mean(Dat(steady_index,:),1);
 
     %% Thermocouple positions (meters)
 x1= 1+3/8;
@@ -51,7 +51,7 @@ x8 = x7+0.5;
 
     %% Linear fit for experimental
 
-    p = polyfit(x, T_steady, 1);
+    p = polyfit(x, Dat_steady, 1);
 
     H_exp = p(1);
     T_0 = polyval(p,0);
@@ -69,7 +69,7 @@ Table_Task1(i,:) = [T_0_table(i), H_exp_table(i), H_an_table(i)];
     plot(x, x.*H_an+T_0);
     hold on
     plot(x, polyval(p,x))
-    errorbar(x,T_steady, 2*ones(size(T_steady)))
+    errorbar(x,Dat_steady, 2*ones(size(Dat_steady)))
     xlabel('Position (m)')
     ylabel('Temperature (°C)')
     title([a(i).name ' Steady State'])
@@ -78,19 +78,20 @@ hold off
 
 %% Task 2
 initial_index = 1:round(0.1*N);   % first 10% of data
-T_initial = mean(T(initial_index,:),1);
+T_init = mean(Dat(initial_index,:),1);
 
-p_init = polyfit(x, T_initial, 1);
+p_init = polyfit(x, T_init, 1);
 M_exp = p_init(1);
 M_0 = polyval(p_init,0);
 
 figure;
-plot(x, x.*M_exp+M_0)
+scatter(x, T_init, 50)
 hold on
 plot(x, polyval(p_init,x))
 xlabel('Position (m)')
 ylabel('Temperature (°C)')
 title([a(i).name ' Initial Temperature Distribution'])
+legend('Initial Data','Linear Fit')
 grid on
 
     %% Tables
