@@ -1,0 +1,70 @@
+%% Part 2 Task 2
+
+L = x(end);  
+
+% thermal diffusivity
+if strcmp(material,'Aluminum')
+    k=130;
+    c_p=960;
+    rho=2810;
+elseif strcmp(material,'Brass')
+    k=115;
+    c_p=380;
+    rho=8500;
+elseif strcmp(material,'Steel')
+    k=16.2;
+    c_p=500;
+    rho=8000;
+end
+alpha = k/(rho*c_p);
+
+% number of modes (change this?)
+modes = 10;   
+
+T_model = zeros(length(time),length(x));
+
+for j = 1:length(x)     
+    xpos = x(j);
+    
+    for t_i = 1:length(time)
+        
+        transient_sum = 0;
+        
+        for n = 1:modes
+            
+            lambda = n*pi/L;
+            
+            % coeff from derivation (placeholder)
+            bn = 2*H_an/(lambda);
+            
+            transient_sum = transient_sum + bn*sin(lambda*xpos)*exp(-lambda^2*alpha*time(t_i));
+            
+        end
+        
+        T_model(t_i,j) = T_0 + H_an*xpos - transient_sum; %Changed to subtract trans_sum because it fits the shape of exp
+        
+    end
+    
+end
+
+% Plot 
+
+figure
+hold on
+
+for j = 1:8
+    
+    plot(time,Dat(:,j),'LineWidth',1)      % exp
+    plot(time,T_model(:,j),'--','LineWidth',1.5) % an
+    
+end
+
+xlabel('Time (s)')
+ylabel('Temperature (°C)')
+title([material ' ' num2str(volts(i)) 'V Model IA'])
+legend('Exp Th1','Model Th1','Exp Th2','Model Th2',...
+       'Exp Th3','Model Th3','Exp Th4','Model Th4',...
+       'Exp Th5','Model Th5','Exp Th6','Model Th6',...
+       'Exp Th7','Model Th7','Exp Th8','Model Th8')
+
+grid on
