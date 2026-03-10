@@ -1,13 +1,12 @@
 %% ASEN 3802 | Task 3 and 4
 % Creator: Natsumi Kakuda
 
-% Housekeeping
 clear;
 clc;
 close all;
 
 %% Toggle
-toggle = 3; % Part 3 = 3; Part 4 = 4
+toggle = 4; % Part 3 = 3; Part 4 = 4
 
 %% Data Call
 dataFolder = 'ASEN3802_HeatConduction_FA25';
@@ -71,15 +70,15 @@ for i = 1:length(a)
 
     % Steady-state fit
     N = length(time);
-    ss_index = round(0.9*N):N; % last 10% of data
-    T_ss = mean(Data(ss_index,:), 1);
-    p = polyfit(x, T_ss, 1);
+    ss_index = round(0.9*N):N-2; % last 10% of data
+    Data_ss = mean(Data(ss_index,:),1); % last 10% of data assumed steady (we took the last 2 off which were NaN)
+    p = polyfit(x, Data_ss, 1);
     H_exp = p(1);
     T_0 = polyval(p, 0);
     H_an = power / (k*A);
 
     % Initial condition fit
-    i_index = 1:round(0.1*N); % first 10% of data
+    i_index = 1:round(0.1 * N); % first 10% of data
     T_i = mean(Data(i_index,:), 1);
     p1 = polyfit(x, T_i, 1);
     M_exp = p1(1);
@@ -101,17 +100,22 @@ for i = 1:length(a)
 
             transient_sum = 0; % intializes sum for Fourier
                 for n = 1:modes
-                    lambda = (n*pi) / L;
+                    lambda = (2*n-1)*pi / (2 * L);
                         if toggle == 3
-                            bn = (2 * H_exp * L / (n*pi)) * (-1)^n;
+                            bn = (8 * H_exp * L)*(-1)^(n-1)/((2*n - 1)^2 * pi^2);
                         elseif toggle == 4
-                            bn = (2 * (M_exp - H_exp) * L / (n*pi)) * (-1)^n;
+                            fun = @(x_pos) (2 / L) .* (M_exp - H_exp) .* x_pos .* sin(lambda .* x_pos);
+                            bn = integral(fun, 0, L);
                         end
-                    transient_sum = transient_sum + bn * sin(lambda * x_pos) * exp(-(lambda^2) * alpha * time(t_i));
+                    transient_sum = transient_sum + bn * sin(lambda * x_pos) * exp(-lambda^2 * alpha * time(t_i));
                 end
 
             % Model IB temperature
-            T_mod(t_i,j) = T_0 + H_exp * x_pos - transient_sum;
+            if toggle == 3 
+                T_mod(t_i,j) = T_0 + H_exp * x_pos - transient_sum;
+            elseif toggle == 4
+                T_mod(t_i,j) = T_0 + H_exp * x_pos + transient_sum;
+            end
         end
     end
 
