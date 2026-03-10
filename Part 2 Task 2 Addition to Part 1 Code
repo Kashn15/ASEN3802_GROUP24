@@ -35,13 +35,13 @@ for j = 1:length(x)
             lambda = (2*n - 1)*pi/(2*L);
             
             % coeff from derivation
-            bn = 8*H_an*L*(-1)^n/((2*n - 1)^2 * pi^2);
+            bn = 8*H_an*L*(-1)^(n-1)/((2*n - 1)^2 * pi^2);
             
             transient_sum = transient_sum + bn*sin(lambda*xpos)*exp(-lambda^2*alpha*time(t_i));
             
         end
         
-        T_model(t_i,j) = T_0 + H_an*xpos + transient_sum;
+        T_model(t_i,j) = T_0 + H_an*xpos - transient_sum;
         
     end
     
