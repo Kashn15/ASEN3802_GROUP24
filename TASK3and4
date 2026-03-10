@@ -1,0 +1,135 @@
+%% ASEN 3802 | Task 3 and 4
+% Creator: Natsumi Kakuda
+
+% Housekeeping
+clear;
+clc;
+close all;
+
+%% Toggle
+toggle = 3; % Part 3 = 3; Part 4 = 4
+
+%% Data Call
+dataFolder = 'ASEN3802_HeatConduction_FA25';
+a = dir(fullfile(dataFolder, '*mA'));
+
+A = (pi/4) * (0.0254^2); % Cross-sectional area of rod
+
+% Thermocouple positions in in converted to m
+x1 = 1 + (3/8);
+x2 = x1 + 0.5;
+x3 = x2 + 0.5;
+x4 = x3 + 0.5;
+x5 = x4 + 0.5;
+x6 = x5 + 0.5;
+x7 = x6 + 0.5;
+x8 = x7 + 0.5;
+
+x = 0.0254 .* [x1, x2, x3, x4, x5, x6, x7, x8]; % [m]
+L = x(end);
+
+modes = 10; % # of modes for Fourier
+
+% Table Storage initilaizATION
+T0_val = zeros(length(a),1);
+Hexp_val = zeros(length(a),1);
+Han_val = zeros(length(a),1);
+Mexp_val = zeros(length(a),1);
+
+for i = 1:length(a)
+
+    % Extract filename
+    b = strsplit(a(i).name, '_'); % Adds a space instead of _
+    material = b{1};
+
+    if strcmp(material, 'Aluminum')
+        k = 130;
+        c_p = 960;
+        rho = 2810;
+    elseif strcmp(material, 'Brass')
+        k = 115;
+        c_p = 380;
+        rho = 8500;
+    elseif strcmp(material, 'Steel')
+        k = 16.2;
+        c_p = 500;
+        rho = 8000;
+    end
+
+    % Voltage/current from file name
+    v = strsplit(b{2}, 'V'); % Takes Volratge
+    ampval = strsplit(b{3}, 'mA'); % Takes current 
+
+    volts = str2double(v{1});
+    amps_mA = str2double(ampval{1});
+    power = volts * amps_mA * 1e-3; % [W]
+
+    % Import data file
+    data = readmatrix(fullfile(dataFolder, a(i).name));
+    time = data(:,1);
+    Data = data(:,2:9); % CH1-CH8
+
+    % Steady-state fit
+    N = length(time);
+    ss_index = round(0.9*N):N; % last 10% of data
+    T_ss = mean(Data(ss_index,:), 1);
+    p = polyfit(x, T_ss, 1);
+    H_exp = p(1);
+    T_0 = polyval(p, 0);
+    H_an = power / (k*A);
+
+    % Initial condition fit
+    i_index = 1:round(0.1*N); % first 10% of data
+    T_i = mean(Data(i_index,:), 1);
+    p1 = polyfit(x, T_i, 1);
+    M_exp = p1(1);
+
+    T0_val(i) = T_0;
+    Hexp_val(i) = H_exp;
+    Han_val(i) = H_an;
+    Mexp_val(i) = M_exp;
+
+    alpha = k / (rho * c_p); % Thermal diffusivity
+
+    % Model IB analytical transient solution
+    T_mod = zeros(length(time), length(x));
+
+    for j = 1:length(x)
+        x_pos = x(j);
+
+        for t_i = 1:length(time)
+
+            transient_sum = 0; % intializes sum for Fourier
+                for n = 1:modes
+                    lambda = (n*pi) / L;
+                        if toggle == 3
+                            bn = (2 * H_exp * L / (n*pi)) * (-1)^n;
+                        elseif toggle == 4
+                            bn = (2 * (M_exp - H_exp) * L / (n*pi)) * (-1)^n;
+                        end
+                    transient_sum = transient_sum + bn * sin(lambda * x_pos) * exp(-(lambda^2) * alpha * time(t_i));
+                end
+
+            % Model IB temperature
+            T_mod(t_i,j) = T_0 + H_exp * x_pos - transient_sum;
+        end
+    end
+
+    %% Plot Model IB v.s. Experimental
+    figure();
+    hold on;
+    for j = 1:8
+        plot(time, Data(:,j), 'LineWidth', 1.2);
+        plot(time, T_mod(:,j), '--', 'LineWidth', 1.5);
+    end
+    xlabel('Time (s)');
+    ylabel('Temperature (^oC)');
+    title([material ' ' num2str(volts) 'V Model IB']);
+    grid on;
+    legend('Exp Th1','Model IB Th1','Exp Th2','Model IB Th2','Exp Th3','Model IB Th3', 'Exp Th4','Model IB Th4', 'Exp Th5','Model IB Th5', 'Exp Th6','Model IB Th6', 'Exp Th7','Model IB Th7', 'Exp Th8','Model IB Th8', 'Location','eastoutside');
+    hold off;
+end
+
+%% Results table
+Results = table({a.name}', T0_val, Hexp_val, Han_val, Mexp_val, 'VariableNames', {'FileName','T0','H_exp','H_an','M_exp'});
+disp(Results);
