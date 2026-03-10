@@ -32,16 +32,16 @@ for j = 1:length(x)
         
         for n = 1:modes
             
-            lambda = n*pi/L;
+            lambda = (2*n - 1)*pi/(2*L);
             
-            % coeff from derivation (placeholder)
-            bn = 2*H_an/(lambda);
+            % coeff from derivation
+            bn = 8*H_an*L*(-1)^n/((2*n - 1)^2 * pi^2);
             
             transient_sum = transient_sum + bn*sin(lambda*xpos)*exp(-lambda^2*alpha*time(t_i));
             
         end
         
-        T_model(t_i,j) = T_0 + H_an*xpos - transient_sum; %Changed to subtract trans_sum because it fits the shape of exp
+        T_model(t_i,j) = T_0 + H_an*xpos + transient_sum;
         
     end
     
@@ -62,9 +62,6 @@ end
 xlabel('Time (s)')
 ylabel('Temperature (°C)')
 title([material ' ' num2str(volts(i)) 'V Model IA'])
-legend('Exp Th1','Model Th1','Exp Th2','Model Th2',...
-       'Exp Th3','Model Th3','Exp Th4','Model Th4',...
-       'Exp Th5','Model Th5','Exp Th6','Model Th6',...
-       'Exp Th7','Model Th7','Exp Th8','Model Th8')
+legend('Exp Th1','Model Th1','Exp Th2','Model Th2','Exp Th3','Model Th3','Exp Th4','Model Th4','Exp Th5','Model Th5','Exp Th6','Model Th6','Exp Th7','Model Th7','Exp Th8','Model Th8')
 
 grid on
