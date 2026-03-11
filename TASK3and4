@@ -1,17 +1,17 @@
 %% ASEN 3802 | Task 3 and 4
 % Creator: Natsumi Kakuda
 
+% Housekeeping
 clear;
 clc;
 close all;
 
 %% Toggle
-toggle = 4; % Part 3 = 3; Part 4 = 4
+toggle = 3; % Part 3 = 3; Part 4 = 4
 
 %% Data Call
 dataFolder = 'ASEN3802_HeatConduction_FA25';
 a = dir(fullfile(dataFolder, '*mA'));
-
 A = (pi/4) * (0.0254^2); % Cross-sectional area of rod
 
 % Thermocouple positions in in converted to m
@@ -23,9 +23,9 @@ x5 = x4 + 0.5;
 x6 = x5 + 0.5;
 x7 = x6 + 0.5;
 x8 = x7 + 0.5;
-
 x = 0.0254 .* [x1, x2, x3, x4, x5, x6, x7, x8]; % [m]
-L = x(end);
+
+L = 0.149225; % [m]
 
 modes = 10; % # of modes for Fourier
 
@@ -75,13 +75,17 @@ for i = 1:length(a)
     p = polyfit(x, Data_ss, 1);
     H_exp = p(1);
     T_0 = polyval(p, 0);
-    H_an = power / (k*A);
-
+    H_an = power / (k * A);
+    
     % Initial condition fit
-    i_index = 1:round(0.1 * N); % first 10% of data
+    i_index = 1;
     T_i = mean(Data(i_index,:), 1);
     p1 = polyfit(x, T_i, 1);
     M_exp = p1(1);
+
+    if toggle == 4
+        T_0_int = polyval(p1, 0);
+    end
 
     T0_val(i) = T_0;
     Hexp_val(i) = H_exp;
@@ -95,16 +99,14 @@ for i = 1:length(a)
 
     for j = 1:length(x)
         x_pos = x(j);
-
         for t_i = 1:length(time)
-
             transient_sum = 0; % intializes sum for Fourier
                 for n = 1:modes
-                    lambda = (2*n-1)*pi / (2 * L);
+                    lambda = (2 * n - 1)* pi / (2 * L);
                         if toggle == 3
-                            bn = (8 * H_exp * L)*(-1)^(n-1)/((2*n - 1)^2 * pi^2);
+                            bn = (8 * H_exp * L) * (-1)^(n-1) / ((2*n - 1)^2 * pi^2);
                         elseif toggle == 4
-                            fun = @(x_pos) (2 / L) .* (M_exp - H_exp) .* x_pos .* sin(lambda .* x_pos);
+                            fun = @(x_i) (2 / L) .* (M_exp - H_exp) * x_i .* sin(lambda * x_i);
                             bn = integral(fun, 0, L);
                         end
                     transient_sum = transient_sum + bn * sin(lambda * x_pos) * exp(-lambda^2 * alpha * time(t_i));
@@ -114,7 +116,7 @@ for i = 1:length(a)
             if toggle == 3 
                 T_mod(t_i,j) = T_0 + H_exp * x_pos - transient_sum;
             elseif toggle == 4
-                T_mod(t_i,j) = T_0 + H_exp * x_pos + transient_sum;
+                T_mod(t_i,j) = T_0_int + H_exp * x_pos + transient_sum;
             end
         end
     end
@@ -123,17 +125,23 @@ for i = 1:length(a)
     figure();
     hold on;
     for j = 1:8
-        plot(time, Data(:,j), 'LineWidth', 1.2);
-        plot(time, T_mod(:,j), '--', 'LineWidth', 1.5);
+        plot(time, Data(:,j), 'k-', 'LineWidth', 1.2);
+        plot(time, T_mod(:,j), 'r--', 'LineWidth', 1.5);
     end
     xlabel('Time (s)');
     ylabel('Temperature (^oC)');
-    title([material ' ' num2str(volts) 'V Model IB']);
     grid on;
-    legend('Exp Th1','Model IB Th1','Exp Th2','Model IB Th2','Exp Th3','Model IB Th3', 'Exp Th4','Model IB Th4', 'Exp Th5','Model IB Th5', 'Exp Th6','Model IB Th6', 'Exp Th7','Model IB Th7', 'Exp Th8','Model IB Th8', 'Location','eastoutside');
+    if toggle == 3
+        legend('Exp','Model IB', 'Location','eastoutside');
+        title([material ' ' num2str(volts) 'V Model IB']);
+    elseif toggle == 4
+        legend('Exp','Model II', 'Location','eastoutside');
+        title([material ' ' num2str(volts) 'V Model II']);
+    end 
     hold off;
 end
 
 %% Results table
 Results = table({a.name}', T0_val, Hexp_val, Han_val, Mexp_val, 'VariableNames', {'FileName','T0','H_exp','H_an','M_exp'});
 disp(Results);
+
