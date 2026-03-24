@@ -108,8 +108,14 @@ alpha = k/(rho*c_p);
 
 % number of modes
 modes = 20;   % Increased from 10 to 20 for better resolution on plots
-%alpha_scale_values = linspace(0.3, 3, 25); % What range????? 0.6 to 1.4****
-alpha_scale_values = linspace(0.6, 1.4, 25); % What range????? 0.6 to 1.4****
+
+if strcmp(material,'Aluminum')
+    alpha_scale_values = linspace(0.6, 1.4, 25); % What range????? 0.6 to 1.4****
+elseif strcmp(material,'Brass')
+    alpha_scale_values = linspace(0.3, 3, 25); % What range????? 0.6 to 1.4****
+elseif strcmp(material,'Steel')
+    alpha_scale_values = linspace(0.3, 3, 25); % What range????? 0.6 to 1.4**** 
+end
 
 for s = 1:length(alpha_scale_values)
     T_test = zeros(length(time),length(x)); % important to delete previous material's data
