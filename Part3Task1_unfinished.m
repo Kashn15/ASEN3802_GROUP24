@@ -1,7 +1,7 @@
 clear;
 clc;
 close all;
-    %% Part 1 Code Used for Part 2
+    %% Part 1 Code Used for Part 3
 dataFolder = 'ASEN3802_HeatConduction_FA25';
 a = dir(fullfile(dataFolder, '*mA'));
 A = (pi/4) * (0.0254^2);
@@ -122,12 +122,12 @@ alpha = k/(rho*c_p);
 %% Part 3 Task 1
 
 % number of modes
-modes = 10;   
-scale_values = linspace(0.3, 3, 25); % What range
+modes = 20;   % Increased from 10 to 20 for better resolution on plots
+alpha_scale_values = linspace(0.3, 3, 25); % What range????? 0.6 to 1.4****
 
-for s = 1:length(scale_values)
+for s = 1:length(alpha_scale_values)
     T_test = zeros(length(time),length(x)); % important to delete previous material's data
-    alpha_test = scale_values(s) * alpha;
+    alpha_test = alpha_scale_values(s) * alpha;
 for j = 1:length(x)     
     xpos = x(j);
     
@@ -152,7 +152,7 @@ RMS_values(s) = sqrt(mean((T_test(:) - Dat(:)).^2));
 end
 % Best alpha
 [~, idx] = min(RMS_values);
-best_alpha = scale_values(idx) * alpha;
+best_alpha = alpha_scale_values(idx) * alpha;
 
 alpha_original(i) = alpha;
 alpha_adjusted(i) = best_alpha;
@@ -170,9 +170,10 @@ for j = 1:length(x)
         for n = 1:modes
             lambda = (2*n - 1)*pi/(2*L);
 
-            bn = 8*H_exp*L*(-1)^(n-1)/((2*n - 1)^2 * pi^2);
+            % coeff from derivation
+            bn = 8*H_exp*L*(-1)^(n-1)/((2*n - 1)^2 * pi^2); %Changed to H_exp
             
-            transient_sum = transient_sum + bn*sin(lambda*xpos)*exp(-lambda^2*best_alpha*time(t_i));
+            transient_sum = transient_sum + bn*sin(lambda*xpos)*exp(-lambda^2*best_alpha*time(t_i)); % Using new best alpha
         end
         
         T_model(t_i,j) = T_0 + H_exp*xpos - transient_sum;
@@ -190,7 +191,7 @@ end
 xlabel('Time (s)')
 ylabel('Temperature (°C)')
 title([material ' ' num2str(volts(i)) 'V - Model III'])
-legend('Experimental','Analytical Model','Location','best')
+legend('TH1:Experimental','TH1:Analytical Model', 'TH2 Exp', 'TH2 An', 'TH3 Exp', 'TH3 An', 'TH4 Exp', 'TH4 An', 'TH5 Exp', 'TH5 An', 'TH6 Exp', 'TH6 An', 'TH7 Exp', 'TH7 An', 'TH8 Exp', 'TH8 An','Location','westoutside')
 grid on
 end
 
