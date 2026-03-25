@@ -109,7 +109,7 @@ alpha = k/(rho*c_p);
 % number of modes
 modes = 20;   % Increased from 10 to 20 for better resolution on plots
 %alpha_scale_values = linspace(0.3, 3, 25); % What range????? 0.6 to 1.4****
-alpha_scale_values = linspace(0.6, 1.4, 25); % What range????? 0.6 to 1.4****
+alpha_scale_values = linspace(0.3, 1.4, 200); % What range????? 0.6 to 1.4****
 RMS_values = zeros(1,25);
 
 for s = 1:length(alpha_scale_values)
@@ -137,7 +137,7 @@ for j = 1:length(x)
 end
 
 time_start = 0;              
-time_end = 0.45 * max(time);  
+time_end = 150; %0.45 * max(time);  
 
 mask = (time >= time_start) & (time <= time_end);
 
