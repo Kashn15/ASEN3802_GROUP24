@@ -33,13 +33,13 @@ for i = 1:length(files)
 
     % Error bars
     err = TC_unc * ones(size(T_exp_8));
-    idx = 1:50:length(S.time);
-
+    idx = 1:25:length(S.time);
 
     % Plot
     figure();
     hold on
-    errorbar(S.time(idx), T_exp_8(idx), err(idx), 'ro','MarkerSize', 3,'LineWidth', 0.8,'DisplayName', 'Experimental Error bars');
+    errorbar(S.time(idx), T_exp_8(idx), err(idx), 'ko','MarkerSize', 3,'LineWidth', 0.8,'DisplayName', 'Experimental Error bars');
+    plot(S.time, T_exp_8,'k-','LineWidth',1.5,'DisplayName','Experimental Data')
     plot(S.time, T_1A_8, 'LineWidth', 1.5, 'DisplayName', 'Model 1A');
     plot(S.time, T_1B_8, 'LineWidth', 1.5, 'DisplayName', 'Model 1B');
     plot(S.time, T_II_8, 'LineWidth', 1.5, 'DisplayName', 'Model II');
