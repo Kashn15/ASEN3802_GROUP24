@@ -1,0 +1,67 @@
+%% Model III
+
+function [T_model, best_alpha, RMS_values, alpha_scale_values] = ModelIII(time, x, L, alpha, H_exp, T_0, Data)
+
+    modes = 20;
+    alpha_scale_values = linspace(0.5, 1.4, 25);
+
+    RMS_values = zeros(size(alpha_scale_values));
+
+    for s = 1:length(alpha_scale_values)
+
+        alpha_test = alpha_scale_values(s) * alpha;
+        T_test = zeros(length(time), length(x));
+
+        for j = 1:length(x)
+            xpos = x(j);
+
+            for t_i = 1:length(time)
+
+                transient_sum = 0;
+
+                for n = 1:modes
+                    lambda = (2*n - 1) * pi / (2*L);
+
+                    bn = 8 * H_exp * L * (-1)^(n-1) / ((2*n - 1)^2 * pi^2);
+
+                    transient_sum = transient_sum + bn * sin(lambda * xpos) * exp(-lambda^2 * alpha_test * time(t_i));
+                end
+
+                T_test(t_i,j) = T_0 + H_exp * xpos - transient_sum;
+            end
+        end
+
+        % RMS
+        time_start = 0;
+        time_end = 0.45 * max(time);
+        mask = (time >= time_start) & (time <= time_end);
+
+        RMS_values(s) = sqrt(mean((T_test(mask,:) - Data(mask,:)).^2, 'all', 'omitnan'));
+    end
+
+    % Best alpha
+    [~, idx] = min(RMS_values);
+    best_alpha = alpha_scale_values(idx) * alpha;
+
+    T_model = zeros(length(time), length(x));
+
+    for j = 1:length(x)
+        xpos = x(j);
+
+        for t_i = 1:length(time)
+
+            transient_sum = 0;
+
+            for n = 1:modes
+                lambda = (2*n - 1) * pi / (2*L);
+
+                bn = 8 * H_exp * L * (-1)^(n-1) / ((2*n - 1)^2 * pi^2);
+
+                transient_sum = transient_sum + bn * sin(lambda * xpos) * exp(-lambda^2 * best_alpha * time(t_i));
+            end
+
+            T_model(t_i,j) = T_0 + H_exp * xpos - transient_sum;
+        end
+    end
+
+end
