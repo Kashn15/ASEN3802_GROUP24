@@ -1,0 +1,21 @@
+%% Model II
+
+function T_model = ModelII(time, x, L, alpha, H_exp, M_exp, T_0)
+
+    modes = 10;
+    T_model = zeros(length(time), length(x));
+    for j = 1:length(x)
+        xpos = x(j);
+        for t_i = 1:length(time)
+            transient_sum = 0;
+            for n = 1:modes
+                lambda = (2*n - 1) * pi / (2*L);
+
+                bn = 8 * H_exp * L * (-1)^(n-1) / ((2*n - 1)^2 * pi^2);
+
+                transient_sum = transient_sum + bn * sin(lambda * xpos) * exp(-lambda^2 * alpha * time(t_i));
+            end
+            T_model(t_i, j) = T_0 + H_exp * xpos - transient_sum;
+        end
+    end
+end
