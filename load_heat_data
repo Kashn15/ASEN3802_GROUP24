@@ -1,0 +1,107 @@
+%% File Read Script
+
+function S = load_heat_data(dataFolder, fileName)
+
+A = (pi/4) * (0.0254^2);
+
+% Thermocouple positions
+x1 = 1 + 3/8;
+x2 = x1 + 0.5;
+x3 = x2 + 0.5;
+x4 = x3 + 0.5;
+x5 = x4 + 0.5;
+x6 = x5 + 0.5;
+x7 = x6 + 0.5;
+x8 = x7 + 0.5;
+
+x = 0.0254 .* [x1 x2 x3 x4 x5 x6 x7 x8];
+
+L = 0.149225; % rod length
+
+%% Parse filename
+
+b = strsplit(fileName,'_');
+material = b{1};
+
+if strcmp(material,'Aluminum')
+    k = 130;
+    c_p = 960;
+    rho = 2810;
+elseif strcmp(material,'Brass')
+    k = 115;
+    c_p = 380;
+    rho = 8500;
+elseif strcmp(material,'Steel')
+    k = 16.2;
+    c_p = 500;
+    rho = 8000;
+end
+
+v = strsplit(b{2},'V');
+ampval = strsplit(b{3},'mA');
+
+volts = str2double(v{1});
+amps = str2double(ampval{1});
+
+power = volts * amps * 1e-3;
+
+%% Load data file
+
+raw = readmatrix(fullfile(dataFolder,fileName));
+
+raw(1,:) = []; % remove header row
+
+time = raw(:,1);
+Data = raw(:,2:9);
+
+%% Steady state fit
+
+N = length(time);
+ss_index = round(0.9*N):N-2;
+
+Data_ss = mean(Data(ss_index,:),1);
+
+p = polyfit(x,Data_ss,1);
+
+H_exp = p(1);
+T_0 = polyval(p,0);
+
+H_an = power/(k*A);
+
+%% Initial condition fit
+
+init_index = 1:round(0.1*N);
+
+T_init = mean(Data(init_index,:),1);
+
+p_init = polyfit(x,T_init,1);
+
+M_exp = p_init(1);
+T_0_init = polyval(p_init,0);
+
+%% Thermal diffusivity
+
+alpha = k/(rho*c_p);
+
+%% Store everything
+
+S.time = time;
+S.Data = Data;
+
+S.x = x;
+S.L = L;
+
+S.alpha = alpha;
+
+S.H_exp = H_exp;
+S.H_an = H_an;
+
+S.T_0 = T_0;
+S.T_0_init = T_0_init;
+
+S.M_exp = M_exp;
+
+S.material = material;
+S.volts = volts;
+
+end
