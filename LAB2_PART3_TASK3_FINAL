@@ -1,0 +1,54 @@
+%% ASEN 3802 | LAB 2 PART 3 TASK 3 MASTER SCRIPT
+
+%% Housekeeping
+clear;
+clc;
+close all;
+
+%% Code
+dataFolder = 'ASEN3802_HeatConduction_FA25';
+files = dir(fullfile(dataFolder, '*mA'));
+
+TC_unc = 2; % Uncertainty
+make_RMS_plot = true;   % true = plot RMS vs alpha for Model III
+
+% Loop
+for i = 1:length(files)
+
+    % Read data and common parameters
+    S = load_heat_data(dataFolder, files(i).name);
+
+    % Run all models
+    T_1A = Model_1A(S.time, S.x, S.L, S.alpha, S.H_an, S.T_0);
+    T_1B = Model1B(S.time, S.x, S.L, S.alpha, S.H_exp, S.T_0);
+    T_II = ModelII(S.time, S.x, S.L, S.alpha, S.H_exp, S.M_exp, S.T_0_init);
+    [T_III, best_alpha, RMS_values, alpha_scale_values] = ModelIII(S.time, S.x, S.L, S.alpha, S.H_exp, S.T_0, S.Data);
+
+    % Extract Thermocouple 8 only
+    T_exp_8 = S.Data(:,8);
+    T_1A_8 = T_1A(:,8);
+    T_1B_8 = T_1B(:,8);
+    T_II_8 = T_II(:,8);
+    T_III_8 = T_III(:,8);
+
+    % Error bars
+    err = TC_unc * ones(size(T_exp_8));
+    idx = 1:50:length(S.time);
+
+
+    % Plot
+    figure();
+    hold on
+    errorbar(S.time(idx), T_exp_8(idx), err(idx), 'ro','MarkerSize', 3,'LineWidth', 0.8,'DisplayName', 'Experimental Error bars');
+    plot(S.time, T_1A_8, 'LineWidth', 1.5, 'DisplayName', 'Model 1A');
+    plot(S.time, T_1B_8, 'LineWidth', 1.5, 'DisplayName', 'Model 1B');
+    plot(S.time, T_II_8, 'LineWidth', 1.5, 'DisplayName', 'Model II');
+    plot(S.time, T_III_8, 'LineWidth', 1.5, 'DisplayName', 'Model III');
+    xlabel('Time (s)');
+    ylabel('Temperature at Th8 (^oC)');
+    title([S.material ' ' num2str(S.volts) 'V - Th8 Model Comparison']);
+    legend('Location', 'eastoutside');
+    grid on;
+    hold off;
+
+end
