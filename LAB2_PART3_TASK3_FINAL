@@ -10,7 +10,7 @@ dataFolder = 'ASEN3802_HeatConduction_FA25';
 files = dir(fullfile(dataFolder, '*mA'));
 
 TC_unc = 2; % Uncertainty
-make_RMS_plot = true;   % true = plot RMS vs alpha for Model III
+
 
 % Loop
 for i = 1:length(files)
